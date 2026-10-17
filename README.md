@@ -25,8 +25,8 @@ The derivation of the reconstruction and the campaign factor is in
 ```
 Manuscript/
 ├── Code/
-│   ├── R/          00_config.R … 31_plos_figure_files.R
-│   └── python/     09_ … 13_, 17_ (.py and .sh)
+│   ├── R        
+│   └── python
 ├── Data/           raw inputs, one folder per state (see below)
 └── Derived/        everything the code writes
     ├── figures/    (with compare/ and explain/ subfolders)
@@ -34,8 +34,7 @@ Manuscript/
     ├── sfnn/       prefit/, tuning/, final/, explain/
     ├── scenarios*/ one folder per counterfactual run
     ├── tsir_forecast/
-    ├── supporting_information/   S1_Appendix, S1–S2 Fig, S1–S6 Table (PDF)
-    └── plos_figures/             Fig1.tif … Fig9.tif
+    ├── supporting_information
 ```
 
 Every path and parameter is set in `00_config.R`. Set `ROOT` there to the
