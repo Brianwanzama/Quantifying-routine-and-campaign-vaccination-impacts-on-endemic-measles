@@ -1,9 +1,6 @@
 # Quantifying-routine-and-campaign-vaccination-impacts-on-endemic-measles
 **Extended TSIR modelling and spatial neural network forecasting**
 
-Code for the manuscript of the same title, by Brian Wanzama and Siuli
-Mukhopadhyay (Department of Mathematics, IIT Bombay).
-
 The analysis covers 95 districts (75 in Uttar Pradesh, 20 in West Bengal) from
 April 2008 to March 2020 on a biweekly time step. It has three parts.
 
@@ -53,7 +50,7 @@ config by its full path, so change that line too if the folder moves.
 | `*_live_births.csv` | Monthly live births by district | HMIS |
 | `*_popn.csv` | Annual district population, 2012–2031, extrapolated back to 2008 | IIPS district projections (Dhar 2022) |
 | `*_mcv1.csv`, `*_mcv2.csv` | Annual first- and second-dose coverage | IHME subnational vaccine coverage estimates |
-| `Uttar Pradesh_mr_campaign.csv` | Campaign start and end dates, children vaccinated, population aged 9 months–15 years, by district | District campaign reports *(name the source)* |
+| `Uttar Pradesh_mr_campaign.csv` | Campaign start and end dates, children vaccinated, population aged 9 months–15 years, by district | District campaign reports *(MoHFW)* |
 | `coordinates.csv` | District centres; also the reference list of district names | GADM 3.6 |
 | `Derived/all_states_district_covariates.csv` | 13 district indicators | NFHS-5 (2019–21) unit-level data, DHS Program |
 
@@ -66,7 +63,6 @@ so it has no campaign file.
 - **R 4.4.1**, with `tsiR` 0.4.3, `sf` 1.0.24, `tidyverse`, `lubridate`,
   `scales`, `patchwork`, `ragg`, `gridExtra`, `gtable`, `magick` and `png`.
 - **Python 3**, with PyTorch, Ray Tune (ASHA scheduler), Captum, NumPy and pandas.
-  *Record the Python, PyTorch, Ray and Captum versions here.*
 - The network was trained on a Linux server (Ubuntu 24.04, Intel Xeon Gold
   6226R, two NVIDIA RTX A5000 GPUs). The R scripts run on Windows or Linux.
 
@@ -174,11 +170,3 @@ Run the scripts in this order. Each prints what it read and wrote.
 - `20b_scenario_bootstrap.R`, `14_fig_train_test.R`, `26_tables.R` and
   `29_supplementary_tables_latex.R` are earlier or alternative versions and are
   not needed to reproduce the manuscript.
-
-## Citation
-
-Wanzama B, Mukhopadhyay S. Quantifying routine and campaign vaccination impacts
-on endemic measles: Extended TSIR modelling and spatial neural network
-forecasting. *Manuscript in preparation.*
-
-Contact: Siuli Mukhopadhyay, siuli@math.iitb.ac.in
