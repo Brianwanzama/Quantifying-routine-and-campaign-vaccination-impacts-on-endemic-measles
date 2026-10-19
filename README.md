@@ -1,5 +1,6 @@
-# Quantifying-routine-and-campaign-vaccination-impacts-on-endemic-measles
-**Extended TSIR modelling and spatial neural network forecasting**
+# Quantifying routine and campaign vaccination impacts on endemic measles
+
+**Extended time-series susceptible–infected–recovered modelling and spatial neural network forecasting**
 
 The analysis covers 95 districts (75 in Uttar Pradesh, 20 in West Bengal) from
 April 2008 to March 2020 on a biweekly time step. It has three parts.
@@ -18,6 +19,12 @@ April 2008 to March 2020 on a biweekly time step. It has three parts.
 The derivation of the reconstruction and the campaign factor is in
 `S1_Appendix.pdf`.
 
+**Repository:** <https://github.com/Brianwanzama/Quantifying-routine-and-campaign-vaccination-impacts-on-endemic-measles>
+
+```
+git clone https://github.com/Brianwanzama/Quantifying-routine-and-campaign-vaccination-impacts-on-endemic-measles.git
+```
+
 ---
 
 ## Folder layout
@@ -25,8 +32,8 @@ The derivation of the reconstruction and the campaign factor is in
 ```
 Manuscript/
 ├── Code/
-│   ├── R        
-│   └── python
+│   ├── R/          00_config.R … 30_supporting_files.R
+│   └── python/     09_ … 13_, 17_ (.py and .sh), environment.yml
 ├── Data/           raw inputs, one folder per state (see below)
 └── Derived/        everything the code writes
     ├── figures/    (with compare/ and explain/ subfolders)
@@ -34,7 +41,8 @@ Manuscript/
     ├── sfnn/       prefit/, tuning/, final/, explain/
     ├── scenarios*/ one folder per counterfactual run
     ├── tsir_forecast/
-    ├── supporting_information
+    ├── supporting_information/   S1_Appendix, S1–S2 Fig, S1–S6 Table (PDF)
+    
 ```
 
 Every path and parameter is set in `00_config.R`. Set `ROOT` there to the
@@ -49,7 +57,7 @@ config by its full path, so change that line too if the folder moves.
 | `*_live_births.csv` | Monthly live births by district | HMIS |
 | `*_popn.csv` | Annual district population, 2012–2031, extrapolated back to 2008 | IIPS district projections (Dhar 2022) |
 | `*_mcv1.csv`, `*_mcv2.csv` | Annual first- and second-dose coverage | IHME subnational vaccine coverage estimates |
-| `Uttar Pradesh_mr_campaign.csv` | Campaign start and end dates, children vaccinated, population aged 9 months–15 years, by district | District campaign reports *(MoHFW)* |
+| `Uttar Pradesh_mr_campaign.csv` | Campaign start and end dates, children vaccinated, population aged 9 months–15 years, by district | District campaign reports *(name the source)* |
 | `coordinates.csv` | District centres; also the reference list of district names | GADM 3.6 |
 | `Derived/all_states_district_covariates.csv` | 13 district indicators | NFHS-5 (2019–21) unit-level data, DHS Program |
 
@@ -61,9 +69,54 @@ so it has no campaign file.
 
 - **R 4.4.1**, with `tsiR` 0.4.3, `sf` 1.0.24, `tidyverse`, `lubridate`,
   `scales`, `patchwork`, `ragg`, `gridExtra`, `gtable`, `magick` and `png`.
-- **Python 3**, with PyTorch, Ray Tune (ASHA scheduler), Captum, NumPy and pandas.
+- **Python 3**, with PyTorch, Ray Tune (ASHA scheduler), Captum, NumPy, pandas
+  and pyarrow, in a conda environment (`environment.yml`; see below).
+  *Record the Python, PyTorch, Ray and Captum versions here.*
 - The network was trained on a Linux server (Ubuntu 24.04, Intel Xeon Gold
   6226R, two NVIDIA RTX A5000 GPUs). The R scripts run on Windows or Linux.
+
+## Setting up the Python environment (GPU server)
+
+The forecasting scripts (09–13) run on the GPU machine in a conda environment.
+The R scripts do not need it.
+
+**1. Create the environment** from `environment.yml`, in the `Code/python` folder:
+
+```bash
+conda env create -f environment.yml
+conda activate measles-sfnn
+```
+
+**2. Install PyTorch** to match the server's CUDA version. Check the version
+with `nvidia-smi` (top right, "CUDA Version"), then take the install command
+from <https://pytorch.org/get-started/locally/>. For example, for CUDA 12.1:
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cu121
+```
+
+**3. Check that the GPUs are seen:**
+
+```bash
+python -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.cuda.device_count())"
+```
+
+The line should end with `True 2` on the two-GPU server.
+
+**4. Record the versions** for the manuscript:
+
+```bash
+python --version
+python -c "import torch, ray, captum, numpy, pandas; print('torch', torch.__version__); print('ray', ray.__version__); print('captum', captum.__version__); print('numpy', numpy.__version__); print('pandas', pandas.__version__)"
+conda list > conda_versions.txt
+```
+
+**5. Set the paths.** `11_run_tuning.sh`, `12_run_training.sh` and
+`13_run_explain.sh` each set `ROOT="/.../.../.../"` near
+the top. Change it to the folder on your machine. The shell scripts pass the
+output folders on to the Python scripts. The one path they do not pass is where
+the loader reads `sfnn_master.csv`: change `BASE_DEFAULT` near the top of
+`09_sfnn_loader.py` as well.
 
 ## Running the pipeline
 
@@ -100,6 +153,45 @@ Run the scripts in this order. Each prints what it read and wrote.
 | `12_run_training.sh` → `12_sfnn_train.py` | Final models, three seeds (0, 1, 2), test-period predictions |
 | `13_run_explain.sh` → `13_sfnn_explain.py` | Grouped Shapley values on 3,000 test rows |
 
+#### Running the forecasting stage in tmux
+
+The search and the training take hours. Run them inside `tmux` so they keep
+going after you log out or the connection drops.
+
+```bash
+tmux new -s sfnn                 # start a session called sfnn
+conda activate measles-sfnn
+cd /.../.../.../Code/python
+
+bash 11_run_tuning.sh            # matrices, then both searches
+bash 12_run_training.sh          # final models (needs 11)
+bash 13_run_explain.sh           # Shapley values (needs 12)
+```
+
+Each step needs the one before it, so run them one after another in the same
+session. To run all three without waiting:
+
+```bash
+bash 11_run_tuning.sh && bash 12_run_training.sh && bash 13_run_explain.sh
+```
+
+Useful tmux commands:
+
+| Command | Does |
+|---|---|
+| `Ctrl+b` then `d` | Leave the session running and return to the normal shell |
+| `tmux ls` | List running sessions |
+| `tmux attach -t sfnn` | Return to the session |
+| `tmux kill-session -t sfnn` | Close the session when the run is finished |
+
+To check progress from outside the session, follow a log in
+`Derived/sfnn/logs/`, for example:
+
+```bash
+tail -f /.../.../.../Derived/sfnn/logs/loader_k1_tlag26.log
+nvidia-smi                       # GPU use
+```
+
 ### 4. TSIR forecast and comparisons (R)
 
 | Script | Does |
@@ -122,7 +214,6 @@ Run the scripts in this order. Each prints what it read and wrote.
 | `28_manuscript_numbers.R` | Every number quoted in the text: `tables/manuscript_numbers.txt` |
 | `29_supplementary_tables.R` | S1–S6 Table as PDFs |
 | `30_supporting_files.R` | All supporting files, named for upload |
-| `31_plos_figure_files.R` | Fig1.tif–Fig9.tif (LZW TIFF, at most 7.5 × 8.75 in), with a check table |
 
 ## Where each manuscript item comes from
 
@@ -169,3 +260,12 @@ Run the scripts in this order. Each prints what it read and wrote.
 - `20b_scenario_bootstrap.R`, `14_fig_train_test.R`, `26_tables.R` and
   `29_supplementary_tables_latex.R` are earlier or alternative versions and are
   not needed to reproduce the manuscript.
+
+## Citation
+
+Wanzama B, Mukhopadhyay S. Quantifying routine and campaign vaccination impacts
+on endemic measles: Extended time-series susceptible–infected–recovered
+modelling and spatial neural network forecasting. *Manuscript in preparation.*
+Code: https://github.com/Brianwanzama/Quantifying-routine-and-campaign-vaccination-impacts-on-endemic-measles
+
+Contact: Siuli Mukhopadhyay, siuli@math.iitb.ac.in
