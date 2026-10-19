@@ -1,0 +1,17 @@
+# Conda environment for the forecasting scripts (09-13, 17).
+# Versions are not pinned because the ones used were not recorded.
+# After creating the environment, record them with:  conda list > conda_versions.txt
+name: measles-sfnn
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - pyarrow        # the loader writes the feature matrices as parquet
+  - pip
+  - pip:
+      - "ray[tune]"  # hyperparameter search, ASHA scheduler
+      - captum       # Shapley value sampling
+# PyTorch is installed separately so that it matches the server's CUDA
+# version. See the README.
