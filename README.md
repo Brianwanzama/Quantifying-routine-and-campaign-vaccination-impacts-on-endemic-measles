@@ -70,8 +70,7 @@ so it has no campaign file.
 - **R 4.4.1**, with `tsiR` 0.4.3, `sf` 1.0.24, `tidyverse`, `lubridate`,
   `scales`, `patchwork`, `ragg`, `gridExtra`, `gtable`, `magick` and `png`.
 - **Python 3**, with PyTorch, Ray Tune (ASHA scheduler), Captum, NumPy, pandas
-  and pyarrow, in a conda environment (`environment.yml`; see below).
-  *Record the Python, PyTorch, Ray and Captum versions here.*
+  and pyarrow, in a conda environment (`environment.yml`
 - The network was trained on a Linux server (Ubuntu 24.04, Intel Xeon Gold
   6226R, two NVIDIA RTX A5000 GPUs). The R scripts run on Windows or Linux.
 
